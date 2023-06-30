@@ -40,13 +40,13 @@ public interface Bridge {
         };
     }
 
-    private static ChannelHandler configHandler(RequestExecutor provider, ProtocolFactory protocolFactory, EventExecutorGroup group, long readerIdleTime) {
+    private static ChannelHandler configHandler(RequestExecutor provider, ProtocolFactory protocolFactory, EventExecutorGroup group, long... idleTime) {
         return new ChannelInitializer<>() {
             @Override
             protected void initChannel(Channel ch) {
                 ChannelPipeline pipeline = ch.pipeline();
                 pipeline.addLast(protocolFactory.newEncoder(), protocolFactory.newDecoder());
-                pipeline.addLast(new IdleStateHandler(readerIdleTime, 0, 0, TimeUnit.SECONDS));
+                pipeline.addLast(new IdleStateHandler(idleTime[0], idleTime[1], 0L, TimeUnit.SECONDS));
                 pipeline.addLast(createInjector(provider));
                 pipeline.addLast(group, DefaultHandler.INSTANCE);
             }
@@ -58,13 +58,13 @@ public interface Bridge {
         objectList.add(1, new RemoteStubFactory());
         bootstrap.group(createEventLoopGroup(), createEventLoopGroup());
         bootstrap.channel(Epoll.isAvailable() ? EpollServerSocketChannel.class : NioServerSocketChannel.class);
-        bootstrap.childHandler(configHandler(new DefaultProvider(objectList, executor), protocolFactory, group, 15L));
+        bootstrap.childHandler(configHandler(new DefaultProvider(objectList, executor), protocolFactory, group, 15L, 0L));
     }
 
     static RemoteBridge initBootstrap(Bootstrap bootstrap, ProtocolFactory protocolFactory, Executor executor) {
         bootstrap.group(createEventLoopGroup());
         bootstrap.channel(Epoll.isAvailable() ? EpollSocketChannel.class : NioSocketChannel.class);
-        bootstrap.handler(configHandler(null, protocolFactory, null, 5L));
+        bootstrap.handler(configHandler(null, protocolFactory, null, 0L, 5L));
         return RemoteBridge.wrapRemoteBridge(bootstrap, executor);
     }
 }
