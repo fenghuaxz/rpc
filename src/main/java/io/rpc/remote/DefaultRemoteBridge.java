@@ -3,8 +3,7 @@ package io.rpc.remote;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.util.concurrent.DefaultPromise;
-import io.netty.util.concurrent.Promise;
+import io.netty.util.concurrent.*;
 import io.rpc.Call;
 
 import java.lang.reflect.Method;
@@ -17,8 +16,8 @@ class DefaultRemoteBridge implements RemoteBridge {
     private final CloseFuture closeFuture = new CloseFuture();
 
     DefaultRemoteBridge(Bootstrap bootstrap, Executor executor) {
-        this.remote = new DefaultRemote(bootstrap, closeFuture);
         this.executor = executor;
+        this.remote = new DefaultRemote(bootstrap, closeFuture);
     }
 
     @Override
@@ -45,6 +44,11 @@ class DefaultRemoteBridge implements RemoteBridge {
         @Override
         public boolean isActive() {
             return remote != null && remote.isActive();
+        }
+
+        @Override
+        public boolean isWritable() {
+            return remote != null && remote.isWritable();
         }
 
         @Override
@@ -81,5 +85,8 @@ class DefaultRemoteBridge implements RemoteBridge {
     }
 
     private static class CloseFuture extends DefaultPromise<Void> {
+        CloseFuture() {
+            super(new DefaultEventExecutor());
+        }
     }
 }

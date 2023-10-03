@@ -101,7 +101,7 @@ public class ObjectServer {
             return this;
         }
 
-        public Builder impl(Object... impls) {
+        public Builder objects(Object... impls) {
             objectList.addAll(Arrays.asList(impls));
             return this;
         }

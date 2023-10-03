@@ -50,7 +50,7 @@ final class DefaultCall<V> implements Call<V>, Future<V> {
     @Override
     @SuppressWarnings("unchecked")
     public V obj() {
-        return isSuccess() && !(result instanceof Signal) ? (V) result : null;
+        return result instanceof Signal || result instanceof CauseHolder ? null : (V) result;
     }
 
     @Override

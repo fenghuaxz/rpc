@@ -22,6 +22,10 @@ interface Remote extends Session {
         throw new UnsupportedOperationException("Stub!");
     }
 
+    default boolean isWritable() {
+        throw new UnsupportedOperationException("Stub!");
+    }
+
     default ChannelFuture writeAndFlush(Object msg) {
         throw new UnsupportedOperationException("Stub!");
     }
@@ -70,9 +74,10 @@ interface Remote extends Session {
         return request.methodName + "#" + Arrays.toString(request.paramTypes).replaceAll("\\s+", "");
     }
 
+    @SuppressWarnings("unchecked")
     static <T> T createProxyObject(String objectName, Class<T> clazz, Remote remote, Executor executor) {
-        //noinspection unchecked
-        return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz, Lifecycle.class}, new ObjectInvocationHandler(objectName, remote, executor));
+        return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz, Lifecycle.class}
+                , new ObjectInvocationHandler(objectName, remote, executor));
     }
 
     static Timeout parseTimeout(Method method) {

@@ -1,6 +1,8 @@
 package io.rpc.remote;
 
-import io.netty.channel.*;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.concurrent.FastThreadLocal;
@@ -42,7 +44,12 @@ final class DefaultHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
         ctx.close();
+        Thread.UncaughtExceptionHandler ueh = Thread.getDefaultUncaughtExceptionHandler();
+        if (ueh != null) {
+            ueh.uncaughtException(Thread.currentThread(), cause);
+            return;
+        }
+        super.exceptionCaught(ctx, cause);
     }
 }

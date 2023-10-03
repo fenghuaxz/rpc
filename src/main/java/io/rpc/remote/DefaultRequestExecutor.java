@@ -61,10 +61,10 @@ final class DefaultRequestExecutor implements RequestExecutor {
                 result = ((Call<?>) pipe.run(request.objectName, object, method, request.args, executor, writePromise)).get();
             } catch (Throwable t) {
                 cause = unwrapThrowable(t);
-            } finally {
-                if (!request.oneway) {
-                    remote.writeAndFlush(request.wrapResult(result, cause), writePromise);
-                }
+            }
+
+            if (!request.oneway) {
+                remote.writeAndFlush(request.wrapResult(result, cause), writePromise);
             }
         });
     }

@@ -7,17 +7,10 @@ import java.util.Map;
 
 public class HelloWorldImpl implements HelloWorld {
 
-    private final Map<Integer, Push> map = new HashMap<>();
 
     @Override
-    public Call<Void> sayHi(String text, Push push) {
+    public Call<Void> sayHi(String text) {
         System.out.println(text);
-        Session session = Session.contextSession();
-
-        ((Lifecycle) push).linkToDeath(() -> map.remove(push));
-
-        push.push("你好!" + session);
-
         return Call.VOID;
     }
 }
