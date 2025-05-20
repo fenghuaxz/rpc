@@ -6,7 +6,7 @@ import io.rpc.aop.Chain;
 public class AccessLog implements Aspect {
 
     @Override
-    public Object proceed(Chain chain) throws Exception {
+    public Object proceed(Chain chain) throws Throwable {
         System.out.println("接口:" + chain.objectName());
         System.out.println("方法调用:" + chain.method().getName());
         return chain.proceed();

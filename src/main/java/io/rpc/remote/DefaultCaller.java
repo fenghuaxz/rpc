@@ -13,7 +13,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-final class DefaultCall<V> implements Call<V>, Future<V> {
+final class DefaultCaller<V> implements Call<V>, Future<V> {
 
     private final Executor executor;
     private final List<Callback<V>> callbacks = new CopyOnWriteArrayList<>();
@@ -23,7 +23,7 @@ final class DefaultCall<V> implements Call<V>, Future<V> {
 
     private final Method method;
 
-    DefaultCall(Method method, Executor executor) {
+    DefaultCaller(Method method, Executor executor) {
         this.method = method;
         this.executor = executor == null ? Runnable::run : executor;
     }
@@ -69,7 +69,7 @@ final class DefaultCall<V> implements Call<V>, Future<V> {
         try {
             try {
                 if (!condition.await(timeout, unit)) {
-                    throw new TimeoutException();
+                    throw io.rpc.TimeoutException.wrapException(method);
                 }
 
                 Throwable ex;
@@ -87,16 +87,17 @@ final class DefaultCall<V> implements Call<V>, Future<V> {
     }
 
     @Override
-    public void enqueue(Callback<V> callback) {
+    public Call<V> enqueue(Callback<V> callback) {
         if (callback == null) {
             throw new NullPointerException("callback == null");
         }
 
         if (isDone()) {
             callback.onComplete(this);
-            return;
+            return this;
         }
         callbacks.add(callback);
+        return this;
     }
 
     void trySuccess(V val) {

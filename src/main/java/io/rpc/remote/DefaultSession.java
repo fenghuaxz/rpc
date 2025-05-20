@@ -5,15 +5,16 @@ import io.netty.channel.*;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.rpc.Call;
+import io.rpc.TimeoutException;
 import io.rpc.annotations.Timeout;
 import io.rpc.beans.Request;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeoutException;
 
 final class DefaultSession implements Remote, Channel {
 
@@ -31,6 +32,18 @@ final class DefaultSession implements Remote, Channel {
         }
     }
 
+    private volatile SocketAddress haproxyAddress;
+
+    @Override
+    public void setHaproxyAddress(SocketAddress address) {
+        this.haproxyAddress = address;
+    }
+
+    @Override
+    public SocketAddress proxyAddress() {
+        return this.haproxyAddress;
+    }
+
     @Override
     public RequestExecutor provider() {
         if (provider == null) {
@@ -39,8 +52,8 @@ final class DefaultSession implements Remote, Channel {
         return this.provider;
     }
 
-    public <V> Call<V> execute(String objectName, Method method, Object[] args, Executor executor) {
-        DefaultCall<V> call = new DefaultCall<>(method, executor);
+    public <V> Call<V> execute(String objectName, Map<String, String> headers, Method method, Object[] args, Executor executor) {
+        DefaultCaller<V> call = new DefaultCaller<>(method, executor);
 
         if (!isWritable()) {
             call.tryFailure(new IOException("!isWritable"));
@@ -57,10 +70,10 @@ final class DefaultSession implements Remote, Channel {
             }
         }
 
-        Request request = new Request(objectName, method, args);
+        Request request = new Request(objectName, headers, method, args);
         if (!request.oneway) {
             //noinspection unchecked
-            Remote.PendingTasks.join(request.id, this, (DefaultCall<Object>) call);
+            Remote.PendingTasks.join(request.id, this, (DefaultCaller<Object>) call);
         }
 
         writeAndFlush(request).addListener((ChannelFutureListener) f -> {
@@ -74,11 +87,12 @@ final class DefaultSession implements Remote, Channel {
                 return;
             }
             Timeout timeout = Remote.parseTimeout(method);
-            ScheduledFuture<?> sf = eventLoop().schedule(() -> call.tryFailure(new TimeoutException()), timeout.value(), timeout.unit());
+            ScheduledFuture<?> sf = eventLoop().schedule(() -> call.tryFailure(TimeoutException.wrapException(method)), timeout.value(), timeout.unit());
             call.enqueue(future -> sf.cancel(true));
         });
         return call;
     }
+
 
     @Override
     public ChannelId id() {

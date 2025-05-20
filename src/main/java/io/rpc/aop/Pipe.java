@@ -10,7 +10,7 @@ public interface Pipe {
 
     Node head();
 
-    default Object run(String objectName, Object object, Method method, Object[] args, Executor executor, ChannelPromise promise) throws Exception {
+    default Object run(String objectName, Object object, Method method, Object[] args, Executor executor, ChannelPromise promise) throws Throwable {
         return new DefaultChain(head(), objectName, object, method, args, executor, promise).proceed();
     }
 

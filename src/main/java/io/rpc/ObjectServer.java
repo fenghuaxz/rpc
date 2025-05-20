@@ -6,11 +6,13 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.WriteBufferWaterMark;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.rpc.codec.ProtocolDecoder;
 import io.rpc.codec.ProtocolEncoder;
 import io.rpc.codec.ProtocolFactory;
-import io.rpc.remote.Bridge;
+import io.rpc.remote.IOUtils;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -28,7 +30,7 @@ public class ObjectServer {
     private ObjectServer(Builder builder) {
         this.bootstrap = builder.bootstrap;
         this.businessGroup = builder.businessGroup;
-        Bridge.initBootstrap(builder.bootstrap, builder.businessGroup, builder.objectList, builder.protocolFactory, builder.executor);
+        IOUtils.initBootstrap(builder.bootstrap, builder.businessGroup, builder.objectList, builder.protocolFactory, builder.executor);
     }
 
     public void open() throws IOException {
@@ -101,12 +103,12 @@ public class ObjectServer {
             return this;
         }
 
-        public Builder objects(Object... impls) {
+        public Builder impls(Object... impls) {
             objectList.addAll(Arrays.asList(impls));
             return this;
         }
 
-        public <E extends ProtocolEncoder, D extends ProtocolDecoder> Builder codec(Class<E> encoder, Class<D> decoder) {
+        public <E extends MessageToByteEncoder<Object>, D extends ByteToMessageDecoder> Builder codec(Class<E> encoder, Class<D> decoder) {
             this.protocolFactory = ProtocolFactory.newFactory(encoder, decoder);
             return this;
         }

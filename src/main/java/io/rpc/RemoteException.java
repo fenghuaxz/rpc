@@ -2,6 +2,17 @@ package io.rpc;
 
 public class RemoteException extends RuntimeException {
 
+    private String stackTraceMessage;
+
+    public RemoteException setStackTraceMessage(String stackTraceMessage) {
+        this.stackTraceMessage = stackTraceMessage;
+        return this;
+    }
+
+    public String getStackTraceMessage() {
+        return stackTraceMessage;
+    }
+
     public RemoteException() {
         super();
     }

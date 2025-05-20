@@ -1,8 +1,10 @@
 package io.rpc.codec;
 
 import io.netty.channel.ChannelException;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.MessageToByteEncoder;
 
-final class DefaultProtocolFactory<E extends ProtocolEncoder, D extends ProtocolDecoder> implements ProtocolFactory {
+final class DefaultProtocolFactory<I, E extends MessageToByteEncoder<I>, D extends ByteToMessageDecoder> implements ProtocolFactory<I> {
 
 
     private final Class<E> encoder;

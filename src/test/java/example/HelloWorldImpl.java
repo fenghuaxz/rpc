@@ -2,15 +2,13 @@ package example;
 
 import io.rpc.*;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class HelloWorldImpl implements HelloWorld {
 
 
     @Override
     public Call<Void> sayHi(String text) {
         System.out.println(text);
+        System.out.println("请求头: " + Session.headers());
         return Call.VOID;
     }
 }

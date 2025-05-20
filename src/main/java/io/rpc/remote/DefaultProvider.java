@@ -1,6 +1,5 @@
 package io.rpc.remote;
 
-import io.rpc.aop.Aspect;
 import io.rpc.aop.Pipe;
 import io.rpc.beans.Request;
 import io.rpc.ObjectNotFoundException;
@@ -49,7 +48,7 @@ final class DefaultProvider implements RequestExecutor {
     public void execute(Remote remote, Request request) {
         RequestExecutor executor = objectMap.get(request.objectName);
         if (executor == null) {
-            remote.writeAndFlush(request.failure(new ObjectNotFoundException(request.objectName)));
+            remote.writeAndFlush(request.wrapThrowable(new ObjectNotFoundException(request.objectName)));
             return;
         }
         executor.execute(remote, request);

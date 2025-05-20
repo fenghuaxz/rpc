@@ -7,6 +7,8 @@ import io.netty.util.concurrent.*;
 import io.rpc.Call;
 
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 class DefaultRemoteBridge implements RemoteBridge {
@@ -14,31 +16,45 @@ class DefaultRemoteBridge implements RemoteBridge {
     private final Remote remote;
     private final Executor executor;
     private final CloseFuture closeFuture = new CloseFuture();
+    private final Map<String, String> headers;
+    private final Map<Class<?>, Object> objects = new ConcurrentHashMap<>();
 
-    DefaultRemoteBridge(Bootstrap bootstrap, Executor executor) {
+    DefaultRemoteBridge(Bootstrap bootstrap, Map<String, String> headers, Executor executor) {
         this.executor = executor;
+        this.headers = headers;
         this.remote = new DefaultRemote(bootstrap, closeFuture);
     }
 
     @Override
-    public Promise<Void> closeFuture() {
-        return closeFuture;
+    public void close() {
+        remote.close();
     }
 
     @Override
+    public void setOnCloseListener(Runnable runnable) {
+        this.closeFuture.setOnCloseListener(runnable);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
     public <T> T getMapper(Class<T> mapper) {
-        return Remote.createProxyObject(null, mapper, remote, executor);
+        return (T) objects.computeIfAbsent(mapper, k -> Remote.createProxyObject(k, headers, remote, executor));
     }
 
     private static class DefaultRemote implements Remote {
 
         private volatile Remote remote;
         private final Bootstrap bootstrap;
-        private final CloseFuture closeFuture;
+        private final GenericFutureListener<Future<? super Void>> closeFutureListener;
 
-        private DefaultRemote(Bootstrap bootstrap, CloseFuture closeFuture) {
+        private DefaultRemote(Bootstrap bootstrap, GenericFutureListener<Future<? super Void>> closeFutureListener) {
             this.bootstrap = bootstrap;
-            this.closeFuture = closeFuture;
+            this.closeFutureListener = closeFutureListener;
+        }
+
+        @Override
+        public ChannelFuture close() {
+            return remote != null ? remote.close() : null;
         }
 
         @Override
@@ -47,22 +63,17 @@ class DefaultRemoteBridge implements RemoteBridge {
         }
 
         @Override
-        public boolean isWritable() {
-            return remote != null && remote.isWritable();
-        }
-
-        @Override
         public ChannelFuture closeFuture() {
             return null;
         }
 
         @Override
-        public <V> Call<V> execute(String objectName, Method method, Object[] args, Executor executor) {
+        public <V> Call<V> execute(String objectName, Map<String, String> headers, Method method, Object[] args, Executor executor) {
             if (isActive()) {
-                return remote.execute(objectName, method, args, executor);
+                return remote.execute(objectName, headers, method, args, executor);
             }
 
-            DefaultCall<V> call = new DefaultCall<>(method, executor);
+            DefaultCaller<V> call = new DefaultCaller<>(method, executor);
 
             bootstrap.connect().addListener((ChannelFutureListener) future -> {
                 if (!future.isSuccess()) {
@@ -70,8 +81,8 @@ class DefaultRemoteBridge implements RemoteBridge {
                     return;
                 }
                 remote = Remote.attach(future.channel());
-                remote.closeFuture().addListener((ChannelFutureListener) f -> closeFuture.trySuccess(null));
-                remote.execute(objectName, method, args, executor).enqueue(f -> {
+                remote.closeFuture().addListener(closeFutureListener);
+                remote.execute(objectName, headers, method, args, executor).enqueue(f -> {
                     if (!f.isSuccess()) {
                         call.tryFailure(f.cause());
                         return;
@@ -84,9 +95,17 @@ class DefaultRemoteBridge implements RemoteBridge {
         }
     }
 
-    private static class CloseFuture extends DefaultPromise<Void> {
-        CloseFuture() {
-            super(new DefaultEventExecutor());
+    private static class CloseFuture implements GenericFutureListener<Future<? super Void>> {
+
+        private volatile Runnable runnable;
+
+        private void setOnCloseListener(Runnable runnable) {
+            this.runnable = runnable;
+        }
+
+        @Override
+        public void operationComplete(Future<? super Void> future) {
+            if (runnable != null) runnable.run();
         }
     }
 }

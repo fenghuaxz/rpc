@@ -4,6 +4,7 @@ import io.netty.channel.ChannelFuture;
 import io.rpc.remote.Bridge;
 
 import java.net.SocketAddress;
+import java.util.Map;
 
 public interface Session {
 
@@ -19,11 +20,24 @@ public interface Session {
         throw new UnsupportedOperationException("Stub!");
     }
 
+    default SocketAddress proxyAddress() {
+        throw new UnsupportedOperationException("Stub!");
+    }
+
     default ChannelFuture closeFuture() {
         throw new UnsupportedOperationException("Stub!");
     }
 
-    static Session contextSession() {
-        return Bridge.contextSession();
+    default ChannelFuture close() {
+        throw new UnsupportedOperationException("Stub!");
     }
+
+    static Session session() {
+        return Bridge.session();
+    }
+
+    static Map<String, String> headers() {
+        return Bridge.headers();
+    }
+
 }

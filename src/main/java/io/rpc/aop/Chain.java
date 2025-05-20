@@ -20,5 +20,5 @@ public interface Chain {
 
     ChannelPromise writePromise();
 
-    Object proceed() throws Exception;
+    Object proceed() throws Throwable;
 }

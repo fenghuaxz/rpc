@@ -11,11 +11,14 @@ import io.rpc.beans.Ping;
 import io.rpc.beans.Request;
 import io.rpc.beans.Response;
 
+import java.util.Map;
+
 @ChannelHandler.Sharable
 final class DefaultHandler extends ChannelInboundHandlerAdapter {
 
     static final DefaultHandler INSTANCE = new DefaultHandler();
     static final FastThreadLocal<Session> CONTEXT_SESSION_HOLDER = new FastThreadLocal<>();
+    static final FastThreadLocal<Map<String, String>> CONTEXT_HEADERS_HOLDER = new FastThreadLocal<>();
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -24,6 +27,7 @@ final class DefaultHandler extends ChannelInboundHandlerAdapter {
 
         if (msg instanceof Request) {
             Request request = (Request) msg;
+            CONTEXT_HEADERS_HOLDER.set(request.headers);
             remote.provider().execute(remote, request);
         } else if (msg instanceof Response) {
             Response response = (Response) msg;
@@ -40,6 +44,11 @@ final class DefaultHandler extends ChannelInboundHandlerAdapter {
                 ctx.close();
             }
         }
+    }
+
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+        super.channelWritabilityChanged(ctx);
     }
 
     @Override

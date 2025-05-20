@@ -8,17 +8,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
-final class RemoteStubFactory implements Aspect {
+final class StubFactory implements Aspect {
 
     private final Map<Method, Parameter[]> parameterCache = new ConcurrentHashMap<>();
 
     @Override
-    public Object proceed(Chain chain) throws Exception {
+    public Object proceed(Chain chain) throws Throwable {
         Method method = chain.method();
-        Parameter[] parameters = parameterCache.computeIfAbsent(method, RemoteStubFactory::wrapParameters);
+        Parameter[] parameters = parameterCache.computeIfAbsent(method, StubFactory::wrapParameters);
         for (Parameter parameter : parameters) {
             String objectName = Remote.parameterObjectName(chain.objectName(), method, parameter.index);
-            chain.args()[parameter.index] = Remote.createProxyObject(objectName, parameter.parameterType, (Remote) chain.session(), chain.executor());
+            chain.args()[parameter.index] = Remote.createProxyObject(objectName, null, parameter.parameterType, (Remote) chain.session(), chain.executor());
         }
         return chain.proceed();
     }

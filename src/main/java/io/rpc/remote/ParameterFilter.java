@@ -11,16 +11,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
-final class EmptyParameterFilter implements Aspect {
+final class ParameterFilter implements Aspect {
 
     private final Map<Method, NotNull[]> parameterCache = new ConcurrentHashMap<>();
 
     @Override
-    public Object proceed(Chain chain) throws Exception {
+    public Object proceed(Chain chain) throws Throwable {
         Method method = chain.method();
         Object[] args = chain.args();
 
-        NotNull[] parameters = parameterCache.computeIfAbsent(method, EmptyParameterFilter::wrapParameters);
+        NotNull[] parameters = parameterCache.computeIfAbsent(method, ParameterFilter::wrapParameters);
 
         for (NotNull parameter : parameters) {
             int index = parameter.index;

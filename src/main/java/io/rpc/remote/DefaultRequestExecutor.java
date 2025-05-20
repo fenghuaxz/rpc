@@ -3,7 +3,6 @@ package io.rpc.remote;
 import io.netty.channel.ChannelPromise;
 import io.rpc.Call;
 import io.rpc.NoSuchMethodException;
-import io.rpc.RemoteException;
 import io.rpc.aop.Pipe;
 import io.rpc.beans.Request;
 
@@ -49,7 +48,7 @@ final class DefaultRequestExecutor implements RequestExecutor {
             String id = Remote.methodId(request);
             Method method;
             if ((method = callingMap.get(id)) == null) {
-                remote.writeAndFlush(request.failure(new NoSuchMethodException(id)));
+                remote.writeAndFlush(request.wrapThrowable(new NoSuchMethodException(id)));
                 return;
             }
 

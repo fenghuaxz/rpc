@@ -6,10 +6,9 @@ import io.netty.handler.codec.MessageToByteEncoder;
 import io.rpc.beans.Ping;
 import io.rpc.beans.Request;
 import io.rpc.beans.Response;
-import io.rpc.protostuff.GraphIOUtil;
-import io.rpc.protostuff.LinkedBuffer;
-import io.rpc.protostuff.Schema;
-import io.rpc.protostuff.runtime.RuntimeSchema;
+
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 
 public class ProtocolEncoder extends MessageToByteEncoder<Object> {
 
@@ -37,14 +36,12 @@ public class ProtocolEncoder extends MessageToByteEncoder<Object> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     protected <T> byte[] encode(T obj) throws Exception {
-        Schema<T> schema = (Schema<T>) RuntimeSchema.getSchema(obj.getClass());
-        LinkedBuffer buffer = LinkedBuffer.allocate(LinkedBuffer.DEFAULT_BUFFER_SIZE);
-        try {
-            return GraphIOUtil.toByteArray(obj, schema, buffer);
-        } finally {
-            buffer.clear();
-        }
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(obj);
+        oos.flush();
+        oos.close();
+        return bos.toByteArray();
     }
 }

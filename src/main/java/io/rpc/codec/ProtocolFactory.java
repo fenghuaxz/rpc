@@ -1,12 +1,15 @@
 package io.rpc.codec;
 
-public interface ProtocolFactory {
+import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.MessageToByteEncoder;
 
-    ProtocolEncoder newEncoder();
+public interface ProtocolFactory<I> {
 
-    ProtocolDecoder newDecoder();
+    MessageToByteEncoder<I> newEncoder();
 
-    static <E extends ProtocolEncoder, D extends ProtocolDecoder> ProtocolFactory newFactory(Class<E> encoder, Class<D> decoder) {
+    ByteToMessageDecoder newDecoder();
+
+    static <I, E extends MessageToByteEncoder<I>, D extends ByteToMessageDecoder> ProtocolFactory<I> newFactory(Class<E> encoder, Class<D> decoder) {
         return new DefaultProtocolFactory<>(encoder, decoder);
     }
 }

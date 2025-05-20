@@ -57,7 +57,7 @@ final class DefaultChain implements Chain {
     }
 
     @Override
-    public Object proceed() throws Exception {
+    public Object proceed() throws Throwable {
         if (node != null) {
             Node node = this.node;
             this.node = node.next;

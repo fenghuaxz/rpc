@@ -7,9 +7,9 @@ import io.netty.util.ReferenceCountUtil;
 import io.rpc.beans.Ping;
 import io.rpc.beans.Request;
 import io.rpc.beans.Response;
-import io.rpc.protostuff.GraphIOUtil;
-import io.rpc.protostuff.Schema;
-import io.rpc.protostuff.runtime.RuntimeSchema;
+
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 
 public class ProtocolDecoder extends LengthFieldBasedFrameDecoder {
 
@@ -18,7 +18,11 @@ public class ProtocolDecoder extends LengthFieldBasedFrameDecoder {
     }
 
     public ProtocolDecoder(int maxFrameLength) {
-        super(maxFrameLength, 1, 4, 0, 0);
+        this(maxFrameLength, 1, 4, 0, 0);
+    }
+
+    public ProtocolDecoder(int maxFrameLength, int lengthFieldOffset, int lengthFieldLength, int lengthAdjustment, int initialBytesToStrip) {
+        super(maxFrameLength, lengthFieldOffset, lengthFieldLength, lengthAdjustment, initialBytesToStrip);
     }
 
     @Override
@@ -56,10 +60,9 @@ public class ProtocolDecoder extends LengthFieldBasedFrameDecoder {
         return decode(data, magicType);
     }
 
-    protected <T> T decode(byte[] data, Class<T> clazz) {
-        T message;
-        Schema<T> schema = RuntimeSchema.getSchema(clazz);
-        GraphIOUtil.mergeFrom(data, message = schema.newMessage(), schema);
-        return message;
+    @SuppressWarnings("unchecked")
+    protected <T> T decode(byte[] data, Class<T> clazz) throws Exception {
+        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
+        return (T) ois.readObject();
     }
 }

@@ -1,6 +1,7 @@
 package io.rpc;
 
 import io.rpc.annotations.Timeout;
+import io.rpc.remote.Bridge;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -19,12 +20,12 @@ public interface Call<V> {
         throw new UnsupportedOperationException("Stub!");
     }
 
-    default void enqueue(Callback<V> callback) {
+    default Call<V> enqueue(Callback<V> callback) {
         throw new UnsupportedOperationException("Stub!");
     }
 
     static <V> Call<V> of(V val) {
-        return new Call<>() {
+        return new Call<V>() {
             @Override
             public V get() {
                 return val;

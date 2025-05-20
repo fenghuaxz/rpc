@@ -1,44 +1,53 @@
 package io.rpc.remote;
 
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.rpc.Lifecycle;
+import io.rpc.Destroy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.net.SocketAddress;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
-final class ObjectInvocationHandler implements InvocationHandler {
+final class ObjectInvocationHandler implements InvocationHandler, Destroy {
 
     private final Remote remote;
     private final String objectName;
+    private final Map<String, String> headers;
+
     private final Executor executor;
+    private final Class<?> type;
+    private Destroy.DeathRecipient deathRecipient;
 
-    private Lifecycle.DeathRecipient deathRecipient;
-    private final Lifecycle lifecycle = deathRecipient -> this.deathRecipient = deathRecipient;
-
-    ObjectInvocationHandler(String objectName, Remote remote, Executor executor) {
+    ObjectInvocationHandler(String objectName, Map<String, String> headers, Class<?> type, Remote remote, Executor executor) {
         this.remote = remote;
         this.objectName = objectName;
+        this.headers = headers;
+        this.type = type;
         this.executor = executor;
         ChannelFuture closeFuture = remote.closeFuture();
-        if (closeFuture != null) {
-            closeFuture.addListener((ChannelFutureListener) future -> {
-                if (deathRecipient != null) {
-                    deathRecipient.onDied();
-                }
-            });
-        }
+        if (closeFuture != null) closeFuture.addListener(f -> {
+            if (deathRecipient != null) {
+                deathRecipient.onDied();
+            }
+        });
+    }
+
+    @Override
+    public void linkToDeath(DeathRecipient deathRecipient) {
+        this.deathRecipient = deathRecipient;
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getDeclaringClass() == Object.class) {
+        if (method.getDeclaringClass() == Object.class || method.getDeclaringClass() == Destroy.class) {
             return method.invoke(this, args);
         }
-        if (method.getDeclaringClass() == Lifecycle.class) {
-            return method.invoke(lifecycle, args);
-        }
-        return remote.execute(objectName, method, args, executor);
+        return remote.execute(objectName, headers, method, args, executor);
+    }
+
+    @Override
+    public String toString() {
+        return type.getName() + "@" + Integer.toHexString(hashCode());
     }
 }
