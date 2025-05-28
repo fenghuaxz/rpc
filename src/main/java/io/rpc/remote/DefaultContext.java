@@ -16,12 +16,12 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
 
-final class DefaultSession implements Remote, Channel {
+final class DefaultContext implements Remote, Channel {
 
     private final Channel channel;
     private volatile RequestExecutor provider;
 
-    public DefaultSession(Channel channel) {
+    public DefaultContext(Channel channel) {
         this.channel = channel;
     }
 
@@ -100,7 +100,7 @@ final class DefaultSession implements Remote, Channel {
     }
 
     @Override
-    public String sessionId() {
+    public String contextId() {
         return id().asLongText();
     }
 

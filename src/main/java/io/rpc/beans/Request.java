@@ -38,9 +38,11 @@ public final class Request implements Serializable {
     }
 
     private static String[] getParamTypeNames(Class<?>[] paramTypes) {
-        return Arrays.stream(paramTypes)
-                .map(Class::getName)
-                .toArray(String[]::new);
+        String[] paramTypeNames = new String[paramTypes.length];
+        for (int i = 0; i < paramTypes.length; i++) {
+            paramTypeNames[i] = paramTypes[i].getName();
+        }
+        return paramTypeNames;
     }
 
     public Class<?>[] getParamTypes() {

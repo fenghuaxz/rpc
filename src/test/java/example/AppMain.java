@@ -1,14 +1,12 @@
 package example;
 
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
-import io.rpc.*;
-import io.rpc.codec.ProtocolDecoder;
-import io.rpc.codec.ProtocolEncoder;
+import io.rpc.ObjectClient;
+import io.rpc.ObjectServer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class AppMain {
 
@@ -23,7 +21,7 @@ public class AppMain {
 
         Map<String, String> headers = new HashMap<>();
         headers.put("version", "1.0.0");
-        headers.put("Host", "127.0.0.1");
+        headers.put("uuid", UUID.randomUUID().toString());
 
         ObjectClient client = new ObjectClient.Builder()
                 .remoteAddress("localhost", 8005)
@@ -31,7 +29,7 @@ public class AppMain {
                 .build();
 
         //同步调用
-        client.getMapper(HelloWorld.class).sayHi("hi").get();
+        client.getMapper(LoginManager.class).login("a", "b", "c", new PushNotifierImpl()).get();
 
         //异步调用
         client.getMapper(HelloWorld.class).sayHi("hi").enqueue(future -> {

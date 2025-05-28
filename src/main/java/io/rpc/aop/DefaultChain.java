@@ -1,7 +1,7 @@
 package io.rpc.aop;
 
 import io.netty.channel.ChannelPromise;
-import io.rpc.Session;
+import io.rpc.Context;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Executor;
@@ -27,8 +27,8 @@ final class DefaultChain implements Chain {
     }
 
     @Override
-    public Session session() {
-        return (Session) writePromise.channel();
+    public Context session() {
+        return (Context) writePromise.channel();
     }
 
     @Override

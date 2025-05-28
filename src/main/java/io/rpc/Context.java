@@ -6,9 +6,9 @@ import io.rpc.remote.Bridge;
 import java.net.SocketAddress;
 import java.util.Map;
 
-public interface Session {
+public interface Context {
 
-    default String sessionId() {
+    default String contextId() {
         throw new UnsupportedOperationException("Stub!");
     }
 
@@ -32,12 +32,12 @@ public interface Session {
         throw new UnsupportedOperationException("Stub!");
     }
 
-    static Session session() {
-        return Bridge.session();
+    static Context context() {
+        return Bridge.context();
     }
 
     static Map<String, String> headers() {
-        return Bridge.headers();
+        return Bridge.contextHeaders();
     }
 
 }

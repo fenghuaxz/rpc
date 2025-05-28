@@ -6,7 +6,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.concurrent.FastThreadLocal;
-import io.rpc.Session;
+import io.rpc.Context;
 import io.rpc.beans.Ping;
 import io.rpc.beans.Request;
 import io.rpc.beans.Response;
@@ -17,13 +17,13 @@ import java.util.Map;
 final class DefaultHandler extends ChannelInboundHandlerAdapter {
 
     static final DefaultHandler INSTANCE = new DefaultHandler();
-    static final FastThreadLocal<Session> CONTEXT_SESSION_HOLDER = new FastThreadLocal<>();
+    static final FastThreadLocal<Context> CONTEXT_HOLDER = new FastThreadLocal<>();
     static final FastThreadLocal<Map<String, String>> CONTEXT_HEADERS_HOLDER = new FastThreadLocal<>();
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         Remote remote = (Remote) ctx.channel();
-        CONTEXT_SESSION_HOLDER.set(remote);
+        CONTEXT_HOLDER.set(remote);
 
         if (msg instanceof Request) {
             Request request = (Request) msg;

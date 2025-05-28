@@ -3,7 +3,8 @@ package io.rpc.remote;
 import io.netty.channel.*;
 import io.rpc.Call;
 import io.rpc.Destroy;
-import io.rpc.Session;
+import io.rpc.Context;
+import io.rpc.PrimitiveType;
 import io.rpc.annotations.Rpc;
 import io.rpc.annotations.Timeout;
 import io.rpc.beans.Request;
@@ -18,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
-interface Remote extends Session {
+interface Remote extends Context {
 
     default boolean isActive() {
         throw new UnsupportedOperationException("Stub!");
@@ -97,7 +98,7 @@ interface Remote extends Session {
 
     @SuppressWarnings("unchecked")
     static <T> T createProxyObject(String objectName, Map<String, String> headers, Class<T> clazz, Remote remote, Executor executor) {
-        return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz, Destroy.class}
+        return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz, PrimitiveType.class, Destroy.class}
                 , new ObjectInvocationHandler(objectName, headers, clazz, remote, executor));
     }
 
@@ -115,7 +116,7 @@ interface Remote extends Session {
         try {
             if (ch != null && !(ch instanceof Remote)) {
                 Field field;
-                Remote remote = new DefaultSession(ch);
+                Remote remote = new DefaultContext(ch);
                 field = DefaultChannelPipeline.class.getDeclaredField("channel");
                 field.setAccessible(true);
                 field.set(ch.pipeline(), remote);

@@ -1,7 +1,7 @@
 package io.rpc.aop;
 
 import io.netty.channel.ChannelPromise;
-import io.rpc.Session;
+import io.rpc.Context;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Executor;
@@ -16,7 +16,7 @@ public interface Chain {
 
     Executor executor();
 
-    Session session();
+    Context session();
 
     ChannelPromise writePromise();
 

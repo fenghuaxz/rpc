@@ -17,6 +17,7 @@ import io.netty.handler.codec.haproxy.HAProxyMessage;
 import io.netty.handler.codec.haproxy.HAProxyMessageDecoder;
 import io.netty.handler.codec.haproxy.HAProxyProtocolVersion;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.rpc.codec.ProtocolFactory;
 
@@ -28,8 +29,9 @@ import java.util.concurrent.TimeUnit;
 
 public class IOUtils {
 
-    static EventLoopGroup createEventLoopGroup(int nThreads) {
-        return Epoll.isAvailable() ? new EpollEventLoopGroup(nThreads) : new NioEventLoopGroup(nThreads);
+    static EventLoopGroup createEventLoopGroup(int nThreads, String poolName) {
+        return Epoll.isAvailable() ? new EpollEventLoopGroup(nThreads, new DefaultThreadFactory(poolName))
+                : new NioEventLoopGroup(nThreads, new DefaultThreadFactory(poolName));
     }
 
     static ChannelHandler createInjector(RequestExecutor provider) {
@@ -78,7 +80,7 @@ public class IOUtils {
     }
 
     public static <I> RemoteBridge initBootstrap(Bootstrap bootstrap, Map<String, String> headers, ProtocolFactory<I> protocolFactory, Executor executor) {
-        bootstrap.group(createEventLoopGroup(0));
+        bootstrap.group(createEventLoopGroup(0, "workerGroup"));
         bootstrap.channel(Epoll.isAvailable() ? EpollSocketChannel.class : NioSocketChannel.class);
         bootstrap.handler(configHandler(null, protocolFactory, null, 0L, 5L));
         return RemoteBridge.wrapBridge(bootstrap, headers, executor);
@@ -87,7 +89,7 @@ public class IOUtils {
     public static <I> void initBootstrap(ServerBootstrap bootstrap, EventExecutorGroup group, List<Object> objectList, ProtocolFactory<I> protocolFactory, Executor executor) {
         objectList.add(0, new ParameterFilter());
         objectList.add(1, new StubFactory());
-        bootstrap.group(createEventLoopGroup(1), createEventLoopGroup(0));
+        bootstrap.group(createEventLoopGroup(1, "bossGroup"), createEventLoopGroup(0, "workerGroup"));
         bootstrap.channel(Epoll.isAvailable() ? EpollServerSocketChannel.class : NioServerSocketChannel.class);
         bootstrap.childHandler(configHandler(new DefaultProvider(objectList, executor), protocolFactory, group, 15L, 0L));
     }

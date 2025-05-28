@@ -1,17 +1,17 @@
 package io.rpc.remote;
 
-import io.rpc.Session;
+import io.rpc.Context;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public interface Bridge {
 
-    static Session session() {
-        return DefaultHandler.CONTEXT_SESSION_HOLDER.get();
+    static Context context() {
+        return DefaultHandler.CONTEXT_HOLDER.get();
     }
 
-    static Map<String, String> headers() {
+    static Map<String, String> contextHeaders() {
         Map<String, String> headers = DefaultHandler.CONTEXT_HEADERS_HOLDER.getIfExists();
         if (headers == null) {
             return new HashMap<>();
